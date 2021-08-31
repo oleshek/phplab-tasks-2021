@@ -1,4 +1,7 @@
 <?php
+define('ITEMLS_ON_PAGE', 5);
+define('CURRENT_PAGE', $_REQUEST['page'] ?? 1);
+
 require_once './functions.php';
 
 $airports = require './airports.php';
@@ -23,6 +26,16 @@ $airports = require './airports.php';
  * and apply pagination logic
  * (see Pagination task below)
  */
+
+if (!empty($_GET['filter_by_first_letter'])) {
+    $airports = filterByFirstLetter($airports, $_GET['filter_by_first_letter']);
+}
+if (!empty($_GET['filter_by_state'])) {
+    $airports = filterByState($airports, $_GET['filter_by_state']);
+}
+if (!empty($_GET['sort'])) {
+    $airports = sortAirports($airports, $_GET['sort']);
+}
 ?>
 <!doctype html>
 <html lang="en">
@@ -53,7 +66,7 @@ $airports = require './airports.php';
         Filter by first letter:
 
         <?php foreach (getUniqueFirstLetters(require './airports.php') as $letter): ?>
-            <a href="#"><?= $letter ?></a>
+            <a href="<?= getQueryStringForFirstLetterFilter($letter) ?>"><?= $letter ?></a>
         <?php endforeach; ?>
 
         <a href="/" class="float-right">Reset all filters</a>
@@ -72,10 +85,10 @@ $airports = require './airports.php';
     <table class="table">
         <thead>
         <tr>
-            <th scope="col"><a href="#">Name</a></th>
-            <th scope="col"><a href="#">Code</a></th>
-            <th scope="col"><a href="#">State</a></th>
-            <th scope="col"><a href="#">City</a></th>
+            <th scope="col"><a href="<?=getQueryStringForSort('name')?>">Name</a></th>
+            <th scope="col"><a href="<?=getQueryStringForSort('code')?>">Code</a></th>
+            <th scope="col"><a href="<?=getQueryStringForSort('state')?>">State</a></th>
+            <th scope="col"><a href="<?=getQueryStringForSort('city')?>">City</a></th>
             <th scope="col">Address</th>
             <th scope="col">Timezone</th>
         </tr>
@@ -91,11 +104,11 @@ $airports = require './airports.php';
              - when you apply filter_by_state, than filter_by_first_letter (see Filtering task #1) is not reset
                i.e. if you have filter_by_first_letter set you can additionally use filter_by_state
         -->
-        <?php foreach ($airports as $airport): ?>
+        <?php foreach (getAirportsForPage($airports) as $airport): ?>
         <tr>
             <td><?= $airport['name'] ?></td>
             <td><?= $airport['code'] ?></td>
-            <td><a href="#"><?= $airport['state'] ?></a></td>
+            <td><a href="<?= getQueryStringForStateFilter($airport['state']) ?>"><?= $airport['state'] ?></a></td>
             <td><?= $airport['city'] ?></td>
             <td><?= $airport['address'] ?></td>
             <td><?= $airport['timezone'] ?></td>
@@ -114,10 +127,12 @@ $airports = require './airports.php';
          - when you apply pagination - all filters and sorting are not reset
     -->
     <nav aria-label="Navigation">
-        <ul class="pagination justify-content-center">
-            <li class="page-item active"><a class="page-link" href="#">1</a></li>
-            <li class="page-item"><a class="page-link" href="#">2</a></li>
-            <li class="page-item"><a class="page-link" href="#">3</a></li>
+        <ul class="pagination justify-content-center flex-wrap">
+            <?php foreach (getPaginationLinks($airports) as $page => $link):
+                $activeClass = ($page == CURRENT_PAGE)? 'active' : '';
+                ?>
+                <li class="page-item <?=$activeClass?>"><a class="page-link" href="<?=$link?>"><?=$page?></a></li>
+            <?php endforeach; ?>
         </ul>
     </nav>
 
