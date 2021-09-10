@@ -6,7 +6,8 @@ class Basics implements BasicsInterface
 {
     private BasicsValidatorInterface $validator;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->validator = new BasicsValidator();
     }
 
@@ -51,6 +52,17 @@ class Basics implements BasicsInterface
     {
         $this->validator->isValidStringException($input);
 
-        return $input[0] + $input[1] + $input[2] == $input[3] + $input[4] + $input[5];
+        $firstSum = 0;
+        $secondSum = 0;
+        $strLen = strlen($input);
+        for ($i = 0; $i < $strLen; $i++) {
+            if ($i < $strLen / 2) {
+                $firstSum += $input[$i];
+            } else {
+                $secondSum += $input[$i];
+            }
+        }
+
+        return $firstSum == $secondSum;
     }
 }
