@@ -15,10 +15,7 @@ class Strings implements StringsInterface
      */
     public function snakeCaseToCamelCase(string $input): string
     {
-        $output = str_replace('_', ' ', $input);
-        $output = str_replace(' ', '', ucwords($output));
-
-        return lcfirst($output);
+        return lcfirst(str_replace('_', '', ucwords($input, '_')));
     }
 
     /**
@@ -32,17 +29,11 @@ class Strings implements StringsInterface
      */
     public function mirrorMultibyteString(string $input): string
     {
-        $input_array = explode(' ', $input);
-        $output = '';
-        foreach ($input_array as $word) {
-            $word_reverse = '';
-            for ($i = mb_strlen($word); $i>=0; $i--) {
-                $word_reverse .= mb_substr($word, $i, 1);
-            }
-            $output .= "$word_reverse ";
-        }
+        preg_match_all('/./us', $input, $array);
+        $array2 = implode('', array_reverse($array[0]));
+        $array3 = explode(' ', $array2);
 
-        return rtrim($output);
+        return implode(' ', array_reverse($array3));
     }
 
     /**
@@ -67,9 +58,9 @@ class Strings implements StringsInterface
         $last_letter = mb_substr($noun, -1);
 
         if ($first_letter == $last_letter) {
-            return ucfirst($noun) . mb_substr($noun, 1);
+            return ucfirst($noun).mb_substr($noun, 1);
         }
 
-        return 'The ' . ucfirst($noun);
+        return 'The '.ucfirst($noun);
     }
 }
