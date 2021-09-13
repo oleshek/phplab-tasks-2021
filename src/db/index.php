@@ -1,14 +1,21 @@
 <?php
-/**
- * Connect to DB
- */
+define('ITEMLS_ON_PAGE', 5);
+define('CURRENT_PAGE', $_REQUEST['page'] ?? 1);
+
+/** @var \PDO $pdo */
+require_once './pdo_ini.php';
+require_once './functions.php';
 
 /**
  * SELECT the list of unique first letters using https://www.w3resource.com/mysql/string-functions/mysql-left-function.php
  * and https://www.w3resource.com/sql/select-statement/queries-with-distinct.php
  * and set the result to $uniqueFirstLetters variable
  */
-$uniqueFirstLetters = ['A', 'B', 'C'];
+$uniqueFirstLetters = getUniqueFirstLetters($pdo);
+if ($uniqueFirstLetters === false) {
+    $uniqueFirstLetters = [];
+    trigger_error('No letters to create filter by first letter', E_USER_WARNING);
+}
 
 // Filtering
 /**
@@ -47,7 +54,8 @@ $uniqueFirstLetters = ['A', 'B', 'C'];
  *
  * For city_name and state_name fields you can use alias https://www.mysqltutorial.org/mysql-alias/
  */
-$airports = [];
+[$airports, $airportsTotal] = getAriportsForPageAndCountTotal($pdo);
+
 ?>
 <!doctype html>
 <html lang="en">
@@ -78,7 +86,7 @@ $airports = [];
         Filter by first letter:
 
         <?php foreach ($uniqueFirstLetters as $letter): ?>
-            <a href="#"><?= $letter ?></a>
+            <a href="<?= getQueryStringForFirstLetterFilter($letter) ?>"><?= $letter ?></a>
         <?php endforeach; ?>
 
         <a href="/" class="float-right">Reset all filters</a>
@@ -97,10 +105,10 @@ $airports = [];
     <table class="table">
         <thead>
         <tr>
-            <th scope="col"><a href="#">Name</a></th>
-            <th scope="col"><a href="#">Code</a></th>
-            <th scope="col"><a href="#">State</a></th>
-            <th scope="col"><a href="#">City</a></th>
+            <th scope="col"><a href="<?=getQueryStringForSort('name')?>">Name</a></th>
+            <th scope="col"><a href="<?=getQueryStringForSort('code')?>">Code</a></th>
+            <th scope="col"><a href="<?=getQueryStringForSort('state')?>">State</a></th>
+            <th scope="col"><a href="<?=getQueryStringForSort('city')?>">City</a></th>
             <th scope="col">Address</th>
             <th scope="col">Timezone</th>
         </tr>
@@ -118,9 +126,9 @@ $airports = [];
         -->
         <?php foreach ($airports as $airport): ?>
         <tr>
-            <td><?= $airport['name'] ?></td>
+            <td><?= $airport['airport_name'] ?></td>
             <td><?= $airport['code'] ?></td>
-            <td><a href="#"><?= $airport['state_name'] ?></a></td>
+            <td><a href="<?= getQueryStringForStateFilter($airport['state_name']) ?>"><?= $airport['state_name'] ?></a></td>
             <td><?= $airport['city_name'] ?></td>
             <td><?= $airport['address'] ?></td>
             <td><?= $airport['timezone'] ?></td>
@@ -139,10 +147,12 @@ $airports = [];
          - when you apply pagination - all filters and sorting are not reset
     -->
     <nav aria-label="Navigation">
-        <ul class="pagination justify-content-center">
-            <li class="page-item active"><a class="page-link" href="#">1</a></li>
-            <li class="page-item"><a class="page-link" href="#">2</a></li>
-            <li class="page-item"><a class="page-link" href="#">3</a></li>
+        <ul class="pagination justify-content-center flex-wrap">
+            <?php foreach (getPaginationLinks($airportsTotal) as $page => $link):
+                $activeClass = ($page == CURRENT_PAGE)? 'active' : '';
+                ?>
+                <li class="page-item <?=$activeClass?>"><a class="page-link" href="<?=$link?>"><?=$page?></a></li>
+            <?php endforeach; ?>
         </ul>
     </nav>
 
